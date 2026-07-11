@@ -8,7 +8,9 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import type { User } from '../types/users.type';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import type { User } from './types/users.type';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -29,14 +31,14 @@ export class UsersController {
 
   @Post()
   @HttpCode(201)
-  create(@Body() user: User): User {
-    return this.usersService.create(user);
+  create(@Body() newUser: CreateUserDto): User {
+    return this.usersService.create(newUser);
   }
 
   @Patch(':id')
   @HttpCode(200)
-  update(@Param('id') id: string, @Body() user: User): User {
-    return this.usersService.update(id, user);
+  update(@Param('id') id: string, @Body() updateUser: UpdateUserDto): User {
+    return this.usersService.update(id, updateUser);
   }
 
   @Delete(':id')
