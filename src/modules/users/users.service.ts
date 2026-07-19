@@ -1,44 +1,84 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { Prisma, Role } from '../../../generated/prisma/client.js';
+import { CreateUserDto } from './dto/create-user.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(createUser: Prisma.UserCreateInput) {
-    return this.databaseService.user.create({
-      data: createUser,
-    });
+  async create(createUserDto: CreateUserDto) {
+    try {
+      return await this.databaseService.user.create({
+        data: createUserDto,
+      });
+    } catch (error: unknown) {
+      this.handlePrismaError(error);
+    }
   }
 
-  async findAll(role?: string) {
+  async findAll(role?: Role) {
     if (!role) {
-      return this.databaseService.user.findMany();
+      return await this.databaseService.user.findMany();
     }
-    return this.databaseService.user.findMany({
+    return await this.databaseService.user.findMany({
       where: {
-        role: role as Role,
+        role,
       },
     });
   }
 
   async findOne(id: number) {
-    return this.databaseService.user.findUnique({
+    const user = await this.databaseService.user.findUnique({
       where: { id },
     });
+    if (!user) {
+      throw new NotFoundException(`Utilisateur non trouvé avec l'ID ${id}`);
+    }
+    return user;
   }
 
-  async update(id: number, updateUser: Prisma.UserUpdateInput) {
-    return this.databaseService.user.update({
-      where: { id },
-      data: updateUser,
-    });
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    try {
+      return await this.databaseService.user.update({
+        where: { id },
+        data: updateUserDto,
+      });
+    } catch (error: unknown) {
+      this.handlePrismaError(error, id);
+    }
   }
 
   async remove(id: number) {
-    return this.databaseService.user.delete({
-      where: { id },
-    });
+    try {
+      return await this.databaseService.user.delete({
+        where: { id },
+      });
+    } catch (error: unknown) {
+      this.handlePrismaError(error, id);
+    }
+  }
+
+  private handlePrismaError(error: unknown, userId?: number): never {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Cette adresse email est déjà utilisée');
+      }
+
+      if (error.code === 'P2025') {
+        throw new NotFoundException(
+          userId === undefined
+            ? 'Utilisateur introuvable'
+            : `Utilisateur ${userId} introuvable`,
+        );
+      }
+    }
+
+    throw error;
   }
 }
