@@ -8,7 +8,7 @@ import {
   IsEnum,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class CreateInMemoryUserDto {
   @IsString({ message: 'Le nom doit être une chaîne de caractères' })
   @IsNotEmpty({ message: 'Le nom est requis' })
   @MinLength(3, { message: 'Le nom doit contenir au moins 3 caractères' })
