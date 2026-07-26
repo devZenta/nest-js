@@ -4,6 +4,7 @@ import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from './common/auth/guards/auth.guard.js';
 import { doubleCsrf } from 'csrf-csrf';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,6 +38,23 @@ async function bootstrap() {
     getSessionIdentifier: (req) => req.sessionID as string,
   });
   app.use(doubleCsrfProtection);
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: false,
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: false,
+      originAgentCluster: false,
+      permittedCrossDomainPolicies: false,
+      referrerPolicy: false,
+      strictTransportSecurity: false,
+      xContentTypeOptions: false,
+      xDnsPrefetchControl: false,
+      xDownloadOptions: false,
+      xFrameOptions: false,
+      xXssProtection: false,
+    }),
+  );
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
