@@ -2,12 +2,13 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from './common/auth/guards/auth.guard.js';
+import { AuthGuard } from './common/guards/auth.guard.js';
 import { doubleCsrf } from 'csrf-csrf';
 import helmet from 'helmet';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -16,6 +17,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalGuards(new AuthGuard());
+  app.set('trust proxy', 'loopback');
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: ['http://localhost:3000'],
