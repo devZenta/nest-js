@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from './common/auth/guards/auth.guard.js';
+import { doubleCsrf } from 'csrf-csrf';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,6 +26,17 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
     credentials: true,
   });
+  const { doubleCsrfProtection } = doubleCsrf({
+    cookieOptions: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      httpOnly: true,
+      maxAge: 3600,
+    },
+    getSecret: () => process.env.CSRF_SECRET as string,
+    getSessionIdentifier: (req) => req.sessionID as string,
+  });
+  app.use(doubleCsrfProtection);
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
